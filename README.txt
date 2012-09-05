@@ -10,8 +10,30 @@ Todo
   do here. Whether it'll play ball for CAS, though, is another question.
 * CAS metadata plugin -- doesn't look like it exists yet
 
-Auth
-----
+Deform common schemas
+---------------------
+
+This package provides a common set of CSRF schemas and validators for use
+in Deform/Pyramid applications.
+
+Simply import, and use.  Ensure that you include the schema in the correct
+order when using multiple inheritance::
+
+    from jcu.common.schemas import CSRFSchema
+
+    class AddKeywordsSchema(CSRFSchema, colander.MappingSchema):
+        ...
+
+and after doing this, your form will now include a CSRF authenticator field
+using the default session implementation in your Pyramid application.
+
+See http://deformdemo.repoze.org/pyramid_csrf_demo/ for more details.
+This is effectively a copy-paste of the demo and could probably be tidied 
+up a bit.
+
+
+Auth with CAS
+-------------
 
 Provides various helpers for Pyramid for authentication. Use the ``includeme``
 functionality provided by Pyramid and include ``jcu.common.auth``. You can
