@@ -33,11 +33,11 @@ setup(name='jcu.common',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          'pyramid',
           # -*- Extra requirements: -*-
       ],
       extras_require={
-          'auth': ['pyramid_who',
+          'auth': ['pyramid',
+                   'pyramid_who',
                    'repoze.who.plugins.cas'],
           'forms': ['deform'],
           'static': ['fanstatic'],

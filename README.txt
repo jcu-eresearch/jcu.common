@@ -3,6 +3,15 @@
 Introduction
 ============
 
+This is a common Pyramid application package for JCU deployments. It probably
+isn't suitable for anything else outside of JCU due to close coupling but 
+it attempts to only require the bare essentials depending on the ``extras``
+dependencies you select.  If you want the whole-shebang then you do this::
+
+    jcu.common[static,forms,auth]
+
+which will include all of the multiple ``setuptools``  extras.
+
 Todo
 ----
 
