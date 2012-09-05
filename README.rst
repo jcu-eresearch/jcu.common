@@ -42,24 +42,8 @@ Deform common schemas
 
     jcu.common[forms]
 
-This package provides a common set of CSRF schemas and validators for use
-in Deform/Pyramid applications.
-
-Simply import, and use.  Ensure that you include the schema in the correct
-order when using multiple inheritance::
-
-    from jcu.common.schemas import CSRFSchema
-
-    class AddKeywordsSchema(CSRFSchema, colander.MappingSchema):
-        ...
-
-and after doing this, your form will now include a CSRF authenticator field
-using the default session implementation in your Pyramid application.
-
-See http://deformdemo.repoze.org/pyramid_csrf_demo/ for more details.
-This is effectively a copy-paste of the demo and could probably be tidied 
-up a bit.
-
+Nothing yet. The original usage of this extra was supplanted by
+``pyramid_deform.CSRFSchema``.
 
 Auth with CAS
 -------------
