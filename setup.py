@@ -34,10 +34,12 @@ setup(name='jcu.common',
       install_requires=[
           'setuptools',
           'pyramid',
-          'pyramid_who',
-          'repoze.who.plugins.cas',
           # -*- Extra requirements: -*-
       ],
+      extras_require={
+          'auth': ['pyramid_who',
+                   'repoze.who.plugins.cas'],
+      },
       setup_requires=[
           'setuptools-git',
       ],

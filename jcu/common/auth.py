@@ -1,6 +1,6 @@
 from pyramid.httpexceptions import HTTPFound
 from pyramid.response import Response
-from pyramid import security
+from pyramid import security, settings
 from pyramid.path import DottedNameResolver
 from pyramid.view import view_config
 from pyramid.authorization import ACLAuthorizationPolicy
@@ -10,6 +10,8 @@ RETURN_ROUTE = 'jcu.auth.return_route'
 AUTH_CALLBACK = 'jcu.auth.auth_callback'
 CONFIG_FILE = 'jcu.auth.who_config_file'
 SSO_URL = 'jcu.auth.sso_url'
+ADMINISTRATORS_KEY = 'jcu.auth.admins'
+
 
 class VerifyUser(object):
     """Verification class for use in applications.
@@ -18,8 +20,13 @@ class VerifyUser(object):
     application. Needs to be a callable class due to lookup limitations
     in Pyramid.
     """
+
     def __call__(self, identity, request):
         """Return groups based on some processing on the repoze.who identity.
+
+        Any groups returned here will be available within Pyramid by calling
+        pyramid.security.effective_principals, so you can use them within
+        any __acl__ you so desire.
 
         *Arguments*
 
@@ -29,7 +36,13 @@ class VerifyUser(object):
                   released by the CAS server.
         request:  pyramid Request instance representing the current request.
         """
-        return
+        groups = ['group:Authenticated']
+
+        admins = request.registry.settings.get(ADMINISTRATORS_KEY, tuple())
+        if identity['repoze.who.userid'] in admins:
+            groups.append('group:Administrators')
+
+        return groups
 
 
 class BaseView(object):
@@ -79,7 +92,7 @@ class LogoutView(BaseView):
             route = self.request.registry.settings[RETURN_ROUTE]
             return_url = self.request.route_url(route)
             sso_url = self.request.registry.settings[SSO_URL]
-            return HTTPFound(location=sso_url+return_url)
+            return HTTPFound(location='%s?url=%s' % (sso_url, return_url))
 
 def includeme(config):
     """Include this module within Pyramid to gain repoze.who auth in your app.
@@ -88,7 +101,13 @@ def includeme(config):
     your configurator, as well as setting up views and routes for
     authentication.
     """
-    #Auth policies
+    #Adjust settings in config
+    admins = config.registry.settings.get(ADMINISTRATORS_KEY)
+    if admins:
+        config.registry.settings[ADMINISTRATORS_KEY] = \
+                settings.aslist(admins)
+
+    #Resolve callback
     resolver = DottedNameResolver()
     callback_dotted = config.registry.settings.get(AUTH_CALLBACK)
     if callback_dotted:
@@ -97,12 +116,21 @@ def includeme(config):
         callback_cls = VerifyUser
     callback = callback_cls()
 
+    #Load pyramid_who configuration
     config_file=config.registry.settings.get(CONFIG_FILE)
     authentication_policy = WhoV2AuthenticationPolicy(
         config_file=config_file,
         identifier_id='auth_tkt',
         callback=callback
     )
+
+    #Figure out the logout URL for CAS
+    for obj in authentication_policy._api_factory.challengers:
+        plugin = obj[1]
+        if hasattr(plugin, 'cas_url'):
+            cas_url = plugin.cas_url
+    config.registry.settings[SSO_URL] = '%slogout' % cas_url
+
     authorization_policy = ACLAuthorizationPolicy()
 
     #Session already configured via pyramid_beaker include
