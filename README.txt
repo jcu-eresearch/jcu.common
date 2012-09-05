@@ -10,8 +10,28 @@ Todo
   do here. Whether it'll play ball for CAS, though, is another question.
 * CAS metadata plugin -- doesn't look like it exists yet
 
+Fanstatic resources
+-------------------
+
+*Usage*::
+
+    jcu.common[static]
+
+This package provides static resources for use with Fanstatic. These are
+available for perusal within ``jcu/common/static`` and definitions within
+``jcu.common.static``.  These can be included within your application by::
+
+    import jcu.common
+    jcu.common.static.alerts.need()
+
+which would include the CSS resources necessary for Bootstrap-style alerts.
+
 Deform common schemas
 ---------------------
+
+*Usage*::
+
+    jcu.common[forms]
 
 This package provides a common set of CSRF schemas and validators for use
 in Deform/Pyramid applications.
@@ -34,6 +54,10 @@ up a bit.
 
 Auth with CAS
 -------------
+
+*Usage*::
+
+    jcu.common[auth]
 
 Provides various helpers for Pyramid for authentication. Use the ``includeme``
 functionality provided by Pyramid and include ``jcu.common.auth``. You can

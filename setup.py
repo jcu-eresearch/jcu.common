@@ -40,11 +40,15 @@ setup(name='jcu.common',
           'auth': ['pyramid_who',
                    'repoze.who.plugins.cas'],
           'forms': ['deform'],
+          'static': ['fanstatic'],
       },
       setup_requires=[
           'setuptools-git',
       ],
       entry_points="""
+      [fanstatic.libraries]
+      jcu_common = jcu.common.resources:library
+
       # -*- Entry points: -*-
       """,
       )
