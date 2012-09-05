@@ -39,6 +39,7 @@ setup(name='jcu.common',
       extras_require={
           'auth': ['pyramid_who',
                    'repoze.who.plugins.cas'],
+          'forms': ['deform'],
       },
       setup_requires=[
           'setuptools-git',
