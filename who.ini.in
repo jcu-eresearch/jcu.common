@@ -1,0 +1,37 @@
+[plugin:casauth]
+use = repoze.who.plugins.cas.main_plugin:make_plugin
+cas_url = ${settings:cas-url}
+rememberer_name = auth_tkt
+path_logout = .*/logout.*
+              .*mode=logout.*
+
+[plugin:auth_tkt]
+use = repoze.who.plugins.auth_tkt:make_plugin
+secret = ${settings:auth-tkt-secret} 
+cookie_name = ${settings:auth-cookie-name}
+secure = False
+include_ip = False
+timeout = 21600
+reissue_time = 21600
+
+[general]
+request_classifier = repoze.who.classifiers:default_request_classifier
+challenge_decider = repoze.who.classifiers:default_challenge_decider
+remote_user_key = REMOTE_USER
+
+[identifiers]
+# plugin_name;classifier_name:.. or just plugin_name (good for any)
+plugins =
+      casauth
+      auth_tkt
+
+[authenticators]
+# plugin_name;classifier_name.. or just plugin_name (good for any)
+plugins =
+      casauth
+      auth_tkt
+
+[challengers]
+# plugin_name;classifier_name:.. or just plugin_name (good for any)
+plugins =
+      casauth

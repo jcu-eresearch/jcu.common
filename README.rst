@@ -90,9 +90,27 @@ You need to configure several options within your Paste configuration too::
     #Who configuration file location for ``pyramid_who``
     jcu.auth.who_config_file = %(here)s/who.ini
 
-We'll automatically figure out the SSO URL from your ``who.ini`` configuration.
+You should use the pre-constructed ``who.ini`` file by adding this to your
+buildout configuration for your WSGI project.  This automatically pulls
+in the relevant templating buildout for ``repoze.who`` and produces a
+``who.ini`` file in your buildout directory::
 
-Check a user's groups by looking up::
+    [buildout]
+    extends = https://github.com/jcu-eresearch/jcu.common/blob/master/auth.cfg
+
+    [settings]
+    cas-url = https://cas.secure.jcu.edu.au/cas/
+    auth-tkt-secret = password
+    auth-tkt-cookie-name = cookie-name
+
+Note that you get the above ``[settings]`` section by default, so if you just
+want to test you probably don't need to re-specify the settings.  The nature
+of buildout, however, means that you can override the options as you need to.
+
+Once you've done this, we'll automatically figure out the SSO URL from your
+``who.ini`` configuration upon running your application.
+
+Check a user's groups by doing the following in your application::
 
     from pyramid.security import effective_principals
     effective_principals(request)
