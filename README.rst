@@ -96,7 +96,7 @@ in the relevant templating buildout for ``repoze.who`` and produces a
 ``who.ini`` file in your buildout directory::
 
     [buildout]
-    extends = https://github.com/jcu-eresearch/jcu.common/blob/master/auth.cfg
+    extends = https://raw.github.com/jcu-eresearch/jcu.common/master/auth.cfg
 
     [settings]
     cas-url = https://cas.secure.jcu.edu.au/cas/
