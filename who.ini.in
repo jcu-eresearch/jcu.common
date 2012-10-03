@@ -8,7 +8,7 @@ path_logout = .*/logout.*
 [plugin:auth_tkt]
 use = repoze.who.plugins.auth_tkt:make_plugin
 secret = ${settings:auth-tkt-secret} 
-cookie_name = ${settings:auth-cookie-name}
+cookie_name = ${settings:auth-tkt-cookie-name}
 secure = False
 include_ip = False
 timeout = 21600
