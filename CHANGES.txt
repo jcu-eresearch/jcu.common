@@ -4,5 +4,7 @@ Changelog
 0.1-dev (unreleased)
 --------------------
 
+- Added file_upload_widget for use with pyramid_deform.
+  [davidjb]
 - Package created using templer
-  [David Beitey]
+  [davidjb]
