@@ -1,3 +1,5 @@
+import urllib
+
 from pyramid.httpexceptions import HTTPFound
 from pyramid.response import Response
 from pyramid import security, settings
@@ -61,12 +63,17 @@ class LoginView(BaseView):
         """Challenge for auth if not logged in yet, else redirect to listing.
         """
         if security.authenticated_userid(self.request) is None:
-            #TODO Should pass the current URL back to CAS so user can come back
-            #repoze.who.plugins.cas munges the ticket processing URL, though.
+            #Place current URL into the request environment for CAS plugin
+            qs = urllib.urlencode({'return': self.request.referrer or ''})
+            self.request.environ['QUERY_STRING'] = qs
             return Response(status=401)
         else:
-            route = self.request.registry.settings[RETURN_ROUTE]
-            return HTTPFound(location=self.request.route_url(route))
+            #Load the user's previous URL out of the request
+            return_url = self.request.params.get('return')
+            if not return_url:
+                return_route = self.request.registry.settings[RETURN_ROUTE]
+                return_url = self.request.route_url(return_route)
+            return HTTPFound(location=return_url)
 
 @view_config(route_name='auth-logout')
 class LogoutView(BaseView):
@@ -76,6 +83,7 @@ class LogoutView(BaseView):
         if security.authenticated_userid(self.request):
             #Return to this view once we've logged out.
             here = self.request.route_url(self.request.matched_route.name)
+            here += '?return={}'.format(self.request.referrer)
             response = HTTPFound(location=here)
 
             #Drop the current session for the user. Copy the session to the
@@ -90,7 +98,9 @@ class LogoutView(BaseView):
         else:
             #Once cookies are gone, then do Single Sign Out (SSO)
             route = self.request.registry.settings[RETURN_ROUTE]
-            return_url = self.request.route_url(route)
+            #Go back to the original page, or the default
+            return_url = self.request.params.get('return',
+                                                 self.request.route_url(route))
             sso_url = self.request.registry.settings[SSO_URL]
             return HTTPFound(location='%s?url=%s' % (sso_url, return_url))
 
