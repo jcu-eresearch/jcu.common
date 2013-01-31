@@ -1,0 +1,36 @@
+<style>
+.deformInlineMappingFieldset li {
+  float: left;
+  clear: none;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.visualClear {
+  clear: both;
+}
+</style>
+<span tal:define="title title|field.title;
+                      description description|field.description;
+                      errormsg errormsg|field.errormsg;
+                      item_template item_template|field.widget.item_template"
+          class="deformInlineMappingFieldset" i18n:domain="deform">
+  <!-- mapping -->
+  <ul>
+    <li class="errorLi" tal:condition="errormsg">
+      <h3 class="errorMsgLbl" i18n:translate=""
+          >There was a problem with this section</h3>
+      <p class="errorMsg">${errormsg}</p>
+    </li>
+    <li class="section" tal:condition="description">
+      <div>${description}</div>
+    </li>
+    ${field.start_mapping()}
+      <div tal:repeat="child field"
+           tal:replace="structure child.render_template(item_template)"/>
+    ${field.end_mapping()}
+  </ul>
+  <!-- /mapping -->
+  <div class="visualClear"><!-- --></div>
+</span>

@@ -9,3 +9,5 @@ def file_upload_widget(node, kw):
     tmpstore = SessionFileUploadTempStore(request)
     return deform.widget.FileUploadWidget(tmpstore)
 
+class InlineMappingWidget(deform.widget.MappingWidget):
+    template = "inline_mapping"
