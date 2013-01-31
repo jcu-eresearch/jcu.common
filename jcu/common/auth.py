@@ -4,7 +4,7 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.response import Response
 from pyramid import security, settings
 from pyramid.path import DottedNameResolver
-from pyramid.view import view_config
+from pyramid.view import view_config, forbidden_view_config
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
@@ -13,6 +13,29 @@ AUTH_CALLBACK = 'jcu.auth.auth_callback'
 CONFIG_FILE = 'jcu.auth.who_config_file'
 SSO_URL = 'jcu.auth.sso_url'
 ADMINISTRATORS_KEY = 'jcu.auth.admins'
+
+
+class AuthenticatedPredicate(object):
+    """Check whether the current user is authenticated or not.
+    """
+
+    def __init__(self, value, config):
+        self.value = value
+
+    def text(self):
+        """Useful message for identifying predicate failures.
+        """
+        return 'authenticated = {}'.format(self.value)
+
+    #: Unique identifier for predicate and value provided
+    phash = text
+
+    def __call__(self, context, request):
+        """Returns a Boolean value if current user is/is not authenticated.
+        """
+        test = security.Authenticated in security.effective_principals(request)
+        return self.value == test
+
 
 
 class VerifyUser(object):
@@ -56,7 +79,7 @@ class BaseView(object):
         self.request = request
 
 
-@view_config(context='pyramid.httpexceptions.HTTPForbidden')
+@forbidden_view_config(authenticated=False)
 @view_config(route_name='auth-login')
 class LoginView(BaseView):
     def __call__(self):
@@ -111,6 +134,8 @@ def includeme(config):
     your configurator, as well as setting up views and routes for
     authentication.
     """
+    config.add_view_predicate('authenticated', AuthenticatedPredicate)
+
     #Adjust settings in config
     admins = config.registry.settings.get(ADMINISTRATORS_KEY)
     if admins:
