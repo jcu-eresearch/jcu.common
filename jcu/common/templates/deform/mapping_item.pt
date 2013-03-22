@@ -6,14 +6,14 @@
                 category category|field.widget.category;
                 required required|field.required;
                 "
-    class="field ${field.error and 'deform-error' or ''}"
+    class="field${field.error and ' ' + (error_class or '')}"
     title="${description}"
     id="item-${oid}"
     tal:omit-tag="hidden"
     i18n:domain="deform">
 
   <!-- mapping_item -->
-  <p tal:condition="field.error and not hidden and not field.typ.__class__.__name__=='Mapping'"
+ <p tal:condition="field.error and not hidden and not field.typ.__class__.__name__=='Mapping'"
      tal:define="errstr 'error-%s' % oid"
      tal:repeat="msg field.error.messages()"
      tal:attributes="id repeat.msg.index==0 and errstr or

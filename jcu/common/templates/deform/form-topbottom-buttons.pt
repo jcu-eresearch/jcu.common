@@ -25,6 +25,21 @@
 
     <legend tal:condition="False">${title}</legend>
 
+     <metal:buttons define-macro="buttons">
+      <li class="buttons button-group">
+        <tal:block repeat="button buttons">
+          <button
+              tal:attributes="disabled button.disabled"
+              id="${formid+button.name}"
+              name="${button.name}"
+              type="${button.type}"
+              class="btnText submit button ${button.css_class}"
+              value="${button.value}">
+            <span>${button.title}</span>
+          </button>
+        </tal:block>
+      </li>
+    </metal:buttons>
     <input type="hidden" name="_charset_" />
     <input type="hidden" name="__formid__" value="${formid}"/>
 
@@ -43,19 +58,7 @@
       <div tal:repeat="child field"
            tal:replace="structure child.render_template(item_template)"/>
 
-      <li class="buttons button-group">
-        <tal:block repeat="button buttons">
-          <button
-              tal:attributes="disabled button.disabled"
-              id="${formid+button.name}"
-              name="${button.name}"
-              type="${button.type}"
-              class="btnText submit button ${button.css_class}"
-              value="${button.value}">
-            <span>${button.title}</span>
-          </button>
-        </tal:block>
-      </li>
+      <metal:buttons use-macro="macros['buttons']" />
 
     </ul>
 
