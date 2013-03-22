@@ -1,14 +1,18 @@
 import urllib
 
+from zope.interface import implements
 from pyramid.httpexceptions import HTTPFound
+from pyramid.interfaces import IRoutePregenerator
 from pyramid.response import Response
 from pyramid import security, settings
+from pyramid.settings import asbool
 from pyramid.path import DottedNameResolver
 from pyramid.view import view_config, forbidden_view_config
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
 RETURN_ROUTE = 'jcu.auth.return_route'
+FORCE_SSL = 'jcu.auth.force_ssl'
 AUTH_CALLBACK = 'jcu.auth.auth_callback'
 CONFIG_FILE = 'jcu.auth.who_config_file'
 SSO_URL = 'jcu.auth.sso_url'
@@ -85,9 +89,13 @@ class LoginView(BaseView):
     def __call__(self):
         """Challenge for auth if not logged in yet, else redirect to listing.
         """
+        force_ssl = self.request.registry.settings[FORCE_SSL]
         if security.authenticated_userid(self.request) is None:
             #Place current URL into the request environment for CAS plugin
-            qs = urllib.urlencode({'return': self.request.referrer or ''})
+            return_url = self.request.referrer or ''
+            if return_url and force_ssl:
+                return_url = return_url.replace('http://', 'https://')
+            qs = urllib.urlencode({'return': return_url})
             self.request.environ['QUERY_STRING'] = qs
             return Response(status=401)
         else:
@@ -95,7 +103,9 @@ class LoginView(BaseView):
             return_url = self.request.params.get('return')
             if not return_url:
                 return_route = self.request.registry.settings[RETURN_ROUTE]
-                return_url = self.request.route_url(return_route)
+                return_url = self.request.route_url(
+                    return_route,
+                    _scheme=force_ssl and 'https' or 'http')
             return HTTPFound(location=return_url)
 
 @view_config(route_name='auth-logout')
@@ -127,6 +137,14 @@ class LogoutView(BaseView):
             sso_url = self.request.registry.settings[SSO_URL]
             return HTTPFound(location='%s?url=%s' % (sso_url, return_url))
 
+class SchemeSelection(object):
+    implements(IRoutePregenerator)
+
+    def __call__(self, request, elements, kw):
+        if request.registry.settings[FORCE_SSL]:
+            kw['_scheme'] = 'https'
+        return (elements, kw)
+
 def includeme(config):
     """Include this module within Pyramid to gain repoze.who auth in your app.
 
@@ -134,6 +152,8 @@ def includeme(config):
     your configurator, as well as setting up views and routes for
     authentication.
     """
+    config.registry.settings[FORCE_SSL] = \
+            asbool(config.registry.settings.get(FORCE_SSL, False))
     config.add_view_predicate('authenticated', AuthenticatedPredicate)
 
     #Adjust settings in config
@@ -174,7 +194,8 @@ def includeme(config):
 
     #Auth routes
     config.add_route('auth-login',
-                     pattern='/login')
+                     pattern='/login',
+                     pregenerator=SchemeSelection())
     config.add_route('auth-logout',
                      pattern='/logout')
     config.scan('.')

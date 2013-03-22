@@ -4,6 +4,8 @@ Changelog
 0.1-dev (unreleased)
 --------------------
 
+- Add force SSL option to auth links.
+  [davidjb]
 - Add extra deform widgets for use within applications.
   [davidjb]
 - Added file_upload_widget for use with pyramid_deform.

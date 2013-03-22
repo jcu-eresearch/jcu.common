@@ -75,6 +75,9 @@ You need to configure several options within your Paste configuration too::
     #or out.
     jcu.auth.return_route = home
 
+    #Boolean as to whether you want to force the login link to use HTTPS
+    jcu.auth.force_ssl = true
+
     #Callable class accepting ``identity`` and ``request`` as positional
     #arguments to check groups for a user (eg you can deny access here).
     jcu.auth.auth_callback = jcu.common.auth.VerifyUser
