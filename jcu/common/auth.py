@@ -15,6 +15,7 @@ RETURN_ROUTE = 'jcu.auth.return_route'
 FORCE_SSL = 'jcu.auth.force_ssl'
 AUTH_CALLBACK = 'jcu.auth.auth_callback'
 CONFIG_FILE = 'jcu.auth.who_config_file'
+ENABLE_SSO = 'jcu.auth.enable_single_sign_out'
 SSO_URL = 'jcu.auth.sso_url'
 ADMINISTRATORS_KEY = 'jcu.auth.admins'
 
@@ -129,13 +130,18 @@ class LogoutView(BaseView):
             response.headerlist.extend(forget_headers)
             return response
         else:
-            #Once cookies are gone, then do Single Sign Out (SSO)
+            #Once cookies are gone, sign out. Either SSO or redirection.
             route = self.request.registry.settings[RETURN_ROUTE]
             #Go back to the original page, or the default
             return_url = self.request.params.get('return',
                                                  self.request.route_url(route))
+
             sso_url = self.request.registry.settings[SSO_URL]
-            return HTTPFound(location='%s?url=%s' % (sso_url, return_url))
+            logout_url = self.request.registry.settings[ENABLE_SSO] \
+                    and '{}?url={}'.format(sso_url, return_url) \
+                    or return_url
+
+            return HTTPFound(location=logout_url)
 
 class SchemeSelection(object):
     implements(IRoutePregenerator)
@@ -185,6 +191,8 @@ def includeme(config):
         if hasattr(plugin, 'cas_url'):
             cas_url = plugin.cas_url
     config.registry.settings[SSO_URL] = '%slogout' % cas_url
+    config.registry.settings[ENABLE_SSO] = \
+            asbool(config.registry.settings.get(ENABLE_SSO, False))
 
     authorization_policy = ACLAuthorizationPolicy()
 
