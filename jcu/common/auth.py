@@ -15,7 +15,7 @@ RETURN_ROUTE = 'jcu.auth.return_route'
 FORCE_SSL = 'jcu.auth.force_ssl'
 AUTH_CALLBACK = 'jcu.auth.auth_callback'
 CONFIG_FILE = 'jcu.auth.who_config_file'
-ENABLE_SSO = 'jcu.auth.enable_single_sign_out'
+ENABLE_SLO = 'jcu.auth.enable_single_log_out'
 SSO_URL = 'jcu.auth.sso_url'
 ADMINISTRATORS_KEY = 'jcu.auth.admins'
 
@@ -137,7 +137,7 @@ class LogoutView(BaseView):
                                                  self.request.route_url(route))
 
             sso_url = self.request.registry.settings[SSO_URL]
-            logout_url = self.request.registry.settings[ENABLE_SSO] \
+            logout_url = self.request.registry.settings[ENABLE_SLO] \
                     and '{}?url={}'.format(sso_url, return_url) \
                     or return_url
 
@@ -191,8 +191,8 @@ def includeme(config):
         if hasattr(plugin, 'cas_url'):
             cas_url = plugin.cas_url
     config.registry.settings[SSO_URL] = '%slogout' % cas_url
-    config.registry.settings[ENABLE_SSO] = \
-            asbool(config.registry.settings.get(ENABLE_SSO, False))
+    config.registry.settings[ENABLE_SLO] = \
+            asbool(config.registry.settings.get(ENABLE_SLO, False))
 
     authorization_policy = ACLAuthorizationPolicy()
 
