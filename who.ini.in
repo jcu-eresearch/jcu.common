@@ -17,7 +17,7 @@ timeout = 21600
 reissue_time = 21600
 
 [plugin:metadata_cache]
-use = repoze.who.plugins.metadata_cache:make_plugin
+use = repoze.who.plugins.metadata_cache.memory:make_plugin
 name = attributes
 
 [general]
