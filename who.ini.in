@@ -1,6 +1,8 @@
 [plugin:casauth]
 use = repoze.who.plugins.cas.main_plugin:make_plugin
 cas_url = ${settings:cas-url}
+cas_version = 3.0
+attributes_name = attributes
 rememberer_name = auth_tkt
 path_logout = .*/logout.*
               .*mode=logout.*
@@ -13,6 +15,10 @@ secure = False
 include_ip = False
 timeout = 21600
 reissue_time = 21600
+
+[plugin:metadata_cache]
+use = repoze.who.plugins.metadata_cache:make_plugin
+name = attributes
 
 [general]
 request_classifier = repoze.who.classifiers:default_request_classifier
@@ -35,3 +41,6 @@ plugins =
 # plugin_name;classifier_name:.. or just plugin_name (good for any)
 plugins =
       casauth
+
+[mdproviders]
+plugins = metadata_cache
