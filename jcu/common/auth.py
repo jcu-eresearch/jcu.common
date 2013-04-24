@@ -151,6 +151,44 @@ class SchemeSelection(object):
             kw['_scheme'] = 'https'
         return (elements, kw)
 
+
+class User(object):
+    """ Simple structure representing an authenticated user in the application.
+    """
+
+    attributes = None
+    user_id = None
+    display_name = None
+
+    def __init__(self, request, user_id=None):
+        """
+        Provide a default ``user_id`` attribute if you know it already.
+        This will help speed things along and short-circuit the ID lookup.
+        """
+        self.request = request
+        self.user_id = user_id or security.authenticated_user_id(request)
+        identity = request.environ.get('repoze.who.identity')
+        self.attributes = identity and identity.get('attributes')
+        self.display_name = self.get_display_name()
+
+    def get_display_name(self):
+        """ Return the user ID or the display name of the user if we know it.
+        """
+        display_name = self.user_id
+        if self.attributes:
+            display_name = '{} {}'.format(self.attributes['givenname'],
+                                          self.attributes['surname'])
+        return display_name
+
+
+def get_user(request):
+    """ Create a user from the given request.
+    """
+    user_id = security.authenticated_userid(request)
+    if user_id:
+        return User(request, user_id=user_id)
+
+
 def includeme(config):
     """Include this module within Pyramid to gain repoze.who auth in your app.
 
@@ -199,6 +237,9 @@ def includeme(config):
     #Session already configured via pyramid_beaker include
     config.set_authentication_policy(authentication_policy)
     config.set_authorization_policy(authorization_policy)
+
+    #Add a special lazy attribute to the request
+    config.add_request_method(get_user, 'user', reify=True)
 
     #Auth routes
     config.add_route('auth-login',
