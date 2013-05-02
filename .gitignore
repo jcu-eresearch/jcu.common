@@ -28,3 +28,4 @@ var
 *.pyo
 *.tmp*
 .coverage
+jcu/profiles
