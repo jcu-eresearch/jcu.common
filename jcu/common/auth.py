@@ -180,6 +180,16 @@ class User(object):
                                           self.attributes['surname'])
         return display_name
 
+    @property
+    def is_manager(self):
+        """ Return a Boolean value representing if the user is a Manager.
+
+        Checks against the Root object rather than the current context.
+        """
+        return security.has_permission('manage',
+                                       self.request.root,
+                                       self.request)
+
 
 def get_user(request):
     """ Create a user from the given request.
@@ -187,6 +197,8 @@ def get_user(request):
     user_id = security.authenticated_userid(request)
     if user_id:
         return User(request, user_id=user_id)
+
+
 
 
 def includeme(config):
@@ -238,7 +250,7 @@ def includeme(config):
     config.set_authentication_policy(authentication_policy)
     config.set_authorization_policy(authorization_policy)
 
-    #Add a special lazy attribute to the request
+    #Add a special lazy attributes/methods to the request
     config.add_request_method(get_user, 'user', reify=True)
 
     #Auth routes
