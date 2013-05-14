@@ -54,6 +54,9 @@
       <li class="section first" tal:condition="description">
         ${description}
       </li>
+      <li class="section">
+        <p>Fields marked with a <span class="req">*</span> icon are required.</p>
+      </li>
 
       <div tal:repeat="child field"
            tal:replace="structure child.render_template(item_template)"/>

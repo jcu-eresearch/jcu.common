@@ -13,13 +13,6 @@
     i18n:domain="deform">
 
   <!-- mapping_item -->
- <p tal:condition="field.error and not hidden and not field.typ.__class__.__name__=='Mapping'"
-     tal:define="errstr 'error-%s' % oid"
-     tal:repeat="msg field.error.messages()"
-     tal:attributes="id repeat.msg.index==0 and errstr or
-     ('%s-%s' % (errstr, repeat.msg.index))"
-     class="${error_class}"
-     i18n:translate="">${msg}</p>
 
   <label tal:condition="not (hidden or category == 'structural')"
          class="desc"
@@ -29,7 +22,17 @@
                         id="req-${oid}">*</span>
   </label>
 
+  <div class="formHelp">${description}</div>
+
   <span tal:replace="structure field.serialize(cstruct)"/>
+
+  <p tal:condition="field.error and not hidden and not field.typ.__class__.__name__=='Mapping'"
+     tal:define="errstr 'error-%s' % oid"
+     tal:repeat="msg field.error.messages()"
+     tal:attributes="id repeat.msg.index==0 and errstr or
+     ('%s-%s' % (errstr, repeat.msg.index))"
+     class="${error_class}"
+     i18n:translate="">${msg}</p>
 
   <!-- /mapping_item -->
 
