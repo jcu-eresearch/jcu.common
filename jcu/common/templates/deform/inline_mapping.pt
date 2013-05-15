@@ -1,3 +1,4 @@
+<!--
 <style>
 .deformInlineMappingFieldset li {
   float: left;
@@ -11,6 +12,7 @@
   clear: both;
 }
 </style>
+-->
 <span tal:define="title title|field.title;
                       description description|field.description;
                       errormsg errormsg|field.errormsg;
@@ -18,11 +20,6 @@
           class="deformInlineMappingFieldset" i18n:domain="deform">
   <!-- mapping -->
   <ul>
-    <li class="errorLi" tal:condition="errormsg">
-      <h3 class="errorMsgLbl" i18n:translate=""
-          >There was a problem with this section</h3>
-      <p class="errorMsg">${errormsg}</p>
-    </li>
     <li class="section" tal:condition="description">
       <div>${description}</div>
     </li>

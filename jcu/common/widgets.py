@@ -13,6 +13,7 @@ def file_upload_widget(node, kw):
 
 class InlineMappingWidget(deform.widget.MappingWidget):
     template = "inline_mapping"
+    error_class = "deform-error"
 
 
 import httplib2
