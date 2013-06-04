@@ -6,6 +6,7 @@ from pyramid.interfaces import IRoutePregenerator
 from pyramid.response import Response
 from pyramid import security, settings
 from pyramid.settings import asbool
+from pyramid.security import Allow
 from pyramid.path import DottedNameResolver
 from pyramid.view import view_config, forbidden_view_config
 from pyramid.authorization import ACLAuthorizationPolicy
@@ -199,6 +200,11 @@ def get_user(request):
         return User(request, user_id=user_id)
 
 
+def allow_acl(identifier):
+    """ Create a permissive ACL entry for Pyramid.
+    """
+    return [(Allow, identifier, 'view'),
+            (Allow, identifier, 'edit')]
 
 
 def includeme(config):
