@@ -36,7 +36,7 @@ class AuthenticatedPredicate(object):
     def text(self):
         """Useful message for identifying predicate failures.
         """
-        return 'authenticated = {}'.format(self.value)
+        return 'authenticated = ' + self.value
 
     #: Unique identifier for predicate and value provided
     phash = text
@@ -79,7 +79,7 @@ class LoginView(BaseView):
                 return_route = self.request.registry.settings[RETURN_ROUTE]
                 return_url = self.request.route_url(
                     return_route,
-                    _scheme=force_ssl and 'https' or 'http')
+                    _scheme='https' if force_ssl else 'http')
             return HTTPFound(location=return_url)
 
 @view_config(route_name='auth-logout')
@@ -90,7 +90,7 @@ class LogoutView(BaseView):
         if security.authenticated_userid(self.request):
             #Return to this view once we've logged out.
             here = self.request.route_url(self.request.matched_route.name)
-            here += '?return={}'.format(self.request.referrer)
+            here += '?return=' + self.request.referrer
             response = HTTPFound(location=here)
 
             #Drop the current session for the user. Copy the session to the
@@ -110,9 +110,8 @@ class LogoutView(BaseView):
                                                  self.request.route_url(route))
 
             sso_url = self.request.registry.settings[SSO_URL]
-            logout_url = self.request.registry.settings[ENABLE_SLO] \
-                    and '{}?url={}'.format(sso_url, return_url) \
-                    or return_url
+            logout_url = (sso_url + '?url=' + return_url) if \
+                    self.request.registry.settings[ENABLE_SLO] else return_url
 
             return HTTPFound(location=logout_url)
 
@@ -149,8 +148,8 @@ class User(object):
         """
         display_name = self.user_id
         if self.attributes:
-            display_name = '{} {}'.format(self.attributes['givenname'],
-                                          self.attributes['surname'])
+            display_name = self.attributes['givenname'] + ' ' + \
+                    self.attributes['surname']
         return display_name
 
     @property
@@ -190,27 +189,7 @@ def verify_administators(identity, request):
     if identity['repoze.who.userid'] in admins:
         return ['group:Administrators']
 
-
-def includeme(config):
-    """Include this module within Pyramid to gain repoze.who auth in your app.
-
-    This method configures an authentication and authorization policy for
-    your configurator, as well as setting up views and routes for
-    authentication.
-    """
-    config.registry.settings[FORCE_SSL] = \
-            asbool(config.registry.settings.get(FORCE_SSL, False))
-    config.add_view_predicate('authenticated', AuthenticatedPredicate)
-
-    #Adjust settings in config
-    admins = config.registry.settings.get(ADMINISTRATORS_KEY)
-    if admins:
-        config.registry.settings[ADMINISTRATORS_KEY] = \
-                settings.aslist(admins)
-
-    #Resolve callbacks from settings
-    callbacks_dotted = config.registry.settings.get(AUTH_CALLBACK, '').split()
-    callbacks = [resolve_dotted(dotted) for dotted in callbacks_dotted]
+def callback_fn(callbacks):
     def callback(identity, request):
         """ Run all callbacks that were configured within the application.
 
@@ -234,12 +213,36 @@ def includeme(config):
         log.debug("Access groups determined: %r", groups)
         return groups
 
+    return callback
+
+
+def includeme(config):
+    """Include this module within Pyramid to gain repoze.who auth in your app.
+
+    This method configures an authentication and authorization policy for
+    your configurator, as well as setting up views and routes for
+    authentication.
+    """
+    config.registry.settings[FORCE_SSL] = \
+            asbool(config.registry.settings.get(FORCE_SSL, False))
+    config.add_view_predicate('authenticated', AuthenticatedPredicate)
+
+    #Adjust settings in config
+    admins = config.registry.settings.get(ADMINISTRATORS_KEY)
+    if admins:
+        config.registry.settings[ADMINISTRATORS_KEY] = \
+                settings.aslist(admins)
+
+    #Resolve callbacks from settings
+    callbacks_dotted = config.registry.settings.get(AUTH_CALLBACK, '').split()
+    callbacks = [resolve_dotted(dotted) for dotted in callbacks_dotted]
+
     #Load pyramid_who configuration
     config_file=config.registry.settings.get(CONFIG_FILE)
     authentication_policy = WhoV2AuthenticationPolicy(
         config_file=config_file,
         identifier_id='auth_tkt',
-        callback=callback
+        callback=callback_fn(callbacks)
     )
 
     #Figure out the logout URL for CAS
