@@ -36,7 +36,7 @@ class AuthenticatedPredicate(object):
     def text(self):
         """Useful message for identifying predicate failures.
         """
-        return 'authenticated = ' + self.value
+        return 'authenticated = ' + ('True' if self.value else 'False')
 
     #: Unique identifier for predicate and value provided
     phash = text
