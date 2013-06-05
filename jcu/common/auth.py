@@ -1,3 +1,4 @@
+import logging
 import urllib
 
 from zope.interface import implements
@@ -7,18 +8,22 @@ from pyramid.response import Response
 from pyramid import security, settings
 from pyramid.settings import asbool
 from pyramid.security import Allow
-from pyramid.path import DottedNameResolver
 from pyramid.view import view_config, forbidden_view_config
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
+from jcu.common.resolver import resolve_dotted
+
 RETURN_ROUTE = 'jcu.auth.return_route'
 FORCE_SSL = 'jcu.auth.force_ssl'
-AUTH_CALLBACK = 'jcu.auth.auth_callback'
+AUTH_CALLBACK = 'jcu.auth.auth_callbacks'
+USER_CLASS = 'jcu.auth.user_class'
 CONFIG_FILE = 'jcu.auth.who_config_file'
 ENABLE_SLO = 'jcu.auth.enable_single_log_out'
 SSO_URL = 'jcu.auth.sso_url'
 ADMINISTRATORS_KEY = 'jcu.auth.admins'
+
+log = logging.getLogger(__name__)
 
 
 class AuthenticatedPredicate(object):
@@ -41,39 +46,6 @@ class AuthenticatedPredicate(object):
         """
         test = security.Authenticated in security.effective_principals(request)
         return self.value == test
-
-
-
-class VerifyUser(object):
-    """Verification class for use in applications.
-    
-    Either subclass or re-create the same functionality in your own
-    application. Needs to be a callable class due to lookup limitations
-    in Pyramid.
-    """
-
-    def __call__(self, identity, request):
-        """Return groups based on some processing on the repoze.who identity.
-
-        Any groups returned here will be available within Pyramid by calling
-        pyramid.security.effective_principals, so you can use them within
-        any __acl__ you so desire.
-
-        *Arguments*
-
-        identity: repoze.who Identity dict-like object with user attributes
-                  present. For instance, these may be `mail`, `login`, `cn`,
-                  `repoze.who.userid` and so forth, depending on what is
-                  released by the CAS server.
-        request:  pyramid Request instance representing the current request.
-        """
-        groups = ['group:Authenticated']
-
-        admins = request.registry.settings.get(ADMINISTRATORS_KEY, tuple())
-        if identity['repoze.who.userid'] in admins:
-            groups.append('group:Administrators')
-
-        return groups
 
 
 class BaseView(object):
@@ -148,7 +120,7 @@ class SchemeSelection(object):
     implements(IRoutePregenerator)
 
     def __call__(self, request, elements, kw):
-        if request.registry.settings[FORCE_SSL]:
+        if request.registry.settings.get(FORCE_SSL):
             kw['_scheme'] = 'https'
         return (elements, kw)
 
@@ -192,19 +164,31 @@ class User(object):
                                        self.request)
 
 
-def get_user(request):
-    """ Create a user from the given request.
-    """
-    user_id = security.authenticated_userid(request)
-    if user_id:
-        return User(request, user_id=user_id)
-
-
 def allow_acl(identifier):
     """ Create a permissive ACL entry for Pyramid.
     """
     return [(Allow, identifier, 'view'),
             (Allow, identifier, 'edit')]
+
+def get_user(user_class=User):
+    def wrapped(request):
+        """ Create a user from the given request.
+        """
+        user_id = security.authenticated_userid(request)
+        if user_id:
+            return user_class(request, user_id=user_id)
+    return wrapped
+
+
+def verify_administators(identity, request):
+    """ Return groups to indicate if the user is a system administator.
+
+    This method uses the relevant user ID configuration from the application to
+    determine if a user is an administrator.
+    """
+    admins = request.registry.settings.get(ADMINISTRATORS_KEY, tuple())
+    if identity['repoze.who.userid'] in admins:
+        return ['group:Administrators']
 
 
 def includeme(config):
@@ -224,14 +208,31 @@ def includeme(config):
         config.registry.settings[ADMINISTRATORS_KEY] = \
                 settings.aslist(admins)
 
-    #Resolve callback
-    resolver = DottedNameResolver()
-    callback_dotted = config.registry.settings.get(AUTH_CALLBACK)
-    if callback_dotted:
-        callback_cls = resolver.resolve(callback_dotted)
-    else:
-        callback_cls = VerifyUser
-    callback = callback_cls()
+    #Resolve callbacks from settings
+    callbacks_dotted = config.registry.settings.get(AUTH_CALLBACK, '').split()
+    callbacks = [resolve_dotted(dotted) for dotted in callbacks_dotted]
+    def callback(identity, request):
+        """ Run all callbacks that were configured within the application.
+
+        Any groups returned here will be available within Pyramid by calling
+        pyramid.security.effective_principals, so you can use them within
+        any __acl__ you so desire.
+
+        *Arguments*
+
+        identity: repoze.who Identity dict-like object with user attributes
+                  present. For instance, these may be `mail`, `login`, `cn`,
+                  `repoze.who.userid` and so forth, depending on what is
+                  released by the CAS server.
+        request:  pyramid Request instance representing the current request.
+        """
+        groups = set(['group:Authenticated'])
+        for fn in callbacks:
+            result = fn(identity, request)
+            if result:
+                groups.update(result)
+        log.debug("Access groups determined: %r", groups)
+        return groups
 
     #Load pyramid_who configuration
     config_file=config.registry.settings.get(CONFIG_FILE)
@@ -257,7 +258,9 @@ def includeme(config):
     config.set_authorization_policy(authorization_policy)
 
     #Add a special lazy attributes/methods to the request
-    config.add_request_method(get_user, 'user', reify=True)
+    user_class_dotted = config.registry.settings.get(USER_CLASS)
+    user_class = resolve_dotted(user_class_dotted, User)
+    config.add_request_method(get_user(user_class), 'user', reify=True)
 
     #Auth routes
     config.add_route('auth-login',
