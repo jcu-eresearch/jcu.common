@@ -8,7 +8,7 @@ isn't suitable for anything else outside of JCU due to close coupling but
 it attempts to only require the bare essentials depending on the ``extras``
 dependencies you select.  If you want the whole-shebang then you do this::
 
-    jcu.common[static,forms,auth]
+    jcu.common[static,forms,auth,ldap]
 
 which will include all of the multiple ``setuptools``  extras.
 
@@ -17,6 +17,21 @@ Todo
 
 * Consider ``pyramid_whoauth`` -- it seems to do quite a bit of what we already
   do here. Whether it'll play ball for CAS, though, is another question.
+
+LDAP Integration
+----------------
+
+*Usage*::
+
+    jcu.common[ldap]
+
+This package provides LDAP helpers for use with ``pyramid_ldap``.  It means
+that you can configure your LDAP directly from your settings ini files,
+rather than having to hard-code information into your project (or repeat
+your boilerplate across projects).
+
+See https://github.com/jcu-eresearch/jcu.common/blob/master/jcu/common/ldap.py
+for more information about what the ini configuration should look like.
 
 Fanstatic resources
 -------------------
