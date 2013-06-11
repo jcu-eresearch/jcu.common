@@ -167,6 +167,5 @@ def includeme(config):
             'scope': as_ldap_scope,
             'cache_period': float
         }
-        import ipdb; ipdb.set_trace()
         config.ldap_set_groups_query(**coerce_settings(groups_query_settings,
                                                        groups_query_coercion))
