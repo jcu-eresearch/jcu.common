@@ -146,7 +146,7 @@ def includeme(config):
     if login_query_settings:
         #Ensure ``filter_tmpl`` is converted for string formatting of login
         login_query_coercion = {
-            'filter_tmpl': lambda v: v.replace('${login}', '%(login)'),
+            'filter_tmpl': lambda v: v.replace('${login}', '%(login)s'),
             'scope': as_ldap_scope,
             'cache_period': float
         }
@@ -163,9 +163,10 @@ def includeme(config):
     if groups_query_settings:
         #Ensure ``filter_tmpl`` is converted for string formatting of userdn
         groups_query_coercion = {
-            'filter_tmpl': lambda v: v.replace('${userdn}', '%(userdn)'),
+            'filter_tmpl': lambda v: v.replace('${userdn}', '%(userdn)s'),
             'scope': as_ldap_scope,
             'cache_period': float
         }
+        import ipdb; ipdb.set_trace()
         config.ldap_set_groups_query(**coerce_settings(groups_query_settings,
                                                        groups_query_coercion))
