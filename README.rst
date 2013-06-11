@@ -17,7 +17,6 @@ Todo
 
 * Consider ``pyramid_whoauth`` -- it seems to do quite a bit of what we already
   do here. Whether it'll play ball for CAS, though, is another question.
-* CAS metadata plugin -- doesn't look like it exists yet
 
 Fanstatic resources
 -------------------
