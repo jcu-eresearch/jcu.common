@@ -11,6 +11,13 @@ def file_upload_widget(node, kw):
     return deform.widget.FileUploadWidget(tmpstore)
 
 
+@colander.deferred
+def image_upload_widget(node, kw):
+    widget = file_upload_widget(node, kw)
+    widget.template = 'image_upload'
+    return widget
+
+
 class InlineMappingWidget(deform.widget.MappingWidget):
     template = "inline_mapping"
     error_class = "deform-error"
