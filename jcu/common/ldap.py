@@ -10,10 +10,15 @@ def verify_ldap_roles(identity,
                       request,
                       _groupfinder=pyramid_ldap.groupfinder):
     """ Return groups to indicate the LDAP roles that a user has.
+
+    This strips out spaces from DNs from LDAP. This causes problems since
+    LDAP ignores spaces, but string matching in ACLs do not.
     """
     user_id = identity['repoze.who.userid']
-    return _groupfinder('uid=' + user_id + ',ou=users,dc=jcu,dc=edu,dc=au',
-                        request)
+    groups = _groupfinder('uid=' + user_id + ',ou=users,dc=jcu,dc=edu,dc=au',
+                          request)
+    for group in groups:
+        yield group.replace(', ', ',')
 
 
 def extract_settings(settings, prefix, keys=()):
