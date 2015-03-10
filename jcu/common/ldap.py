@@ -6,12 +6,14 @@ from pyramid.path import DottedNameResolver
 import pyramid_ldap
 
 
-def verify_ldap_roles(identity, request, _groupfinder=pyramid_ldap.groupfinder):
+def verify_ldap_roles(identity,
+                      request,
+                      _groupfinder=pyramid_ldap.groupfinder):
     """ Return groups to indicate the LDAP roles that a user has.
     """
     user_id = identity['repoze.who.userid']
     return _groupfinder('uid=' + user_id + ',ou=users,dc=jcu,dc=edu,dc=au',
-                       request)
+                        request)
 
 
 def extract_settings(settings, prefix, keys=()):
@@ -19,8 +21,8 @@ def extract_settings(settings, prefix, keys=()):
     """
     kwarg_names = [prefix + k for k in keys]
     size = len(prefix)
-    return dict(((k[size:], settings[k]) for k in settings.keys() \
-                   if k in kwarg_names))
+    return dict(((k[size:], settings[k]) for k in settings.keys()
+                 if k in kwarg_names))
 
 
 def extract_settings_fn_args(settings, prefix, fn):
@@ -46,9 +48,11 @@ def coerce_settings(settings, coercion):
             coerced[setting] = value
     return coerced
 
+
 def replace_user_dn(value):
     """ Tidy up the value's userdn entry to be suitable for string formatting.
     """
+
 
 def as_ldap_scope(value):
     """ Resolve a given LDAP scope from a string into a value.
@@ -112,13 +116,14 @@ def includeme(config):
 
         pyramid_ldap.groups_query.prefix = ldap.groups_query.
         ldap.groups_query.base_dn = ou=org,dc=example,dc=com
-        ldap.groups_query.filter_tmpl = (&(cn=RoleName)(roleOccupant=${userdn}))
+        ldap.groups_query.filter_tmpl = \
+            (&(cn=RoleName)(roleOccupant=${userdn}))
         ldap.groups_query.scope = ldap.SCOPE_SUBTREE
         ldap.groups_query.cache_period = 600
     """
     config.include('pyramid_ldap')
 
-    #General LDAP setup
+    # General LDAP setup
     prefix = config.registry.settings.get('pyramid_ldap.setup.prefix',
                                           'ldap.setup.')
     setup_settings = extract_settings_fn_args(config.registry.settings,
@@ -131,11 +136,10 @@ def includeme(config):
                           'retry_delay': float,
                           'timeout': float,
                           'use_tls': asbool,
-                          'use_pool': asbool
-                         }
+                          'use_pool': asbool}
         config.ldap_setup(**coerce_settings(setup_settings, setup_coercion))
 
-    #Configure LDAP Login query
+    # Configure LDAP Login query
     prefix = config.registry.settings.get('pyramid_ldap.login_query.prefix',
                                           'ldap.login_query.')
     login_query_settings = extract_settings_fn_args(
@@ -144,7 +148,7 @@ def includeme(config):
         pyramid_ldap.ldap_set_login_query)
 
     if login_query_settings:
-        #Ensure ``filter_tmpl`` is converted for string formatting of login
+        # Ensure ``filter_tmpl`` is converted for string formatting of login
         login_query_coercion = {
             'filter_tmpl': lambda v: v.replace('${login}', '%(login)s'),
             'scope': as_ldap_scope,
@@ -152,7 +156,7 @@ def includeme(config):
         }
         config.ldap_set_login_query(**coerce_settings(login_query_settings,
                                                       login_query_coercion))
-    #Configure LDAP Groups query
+    # Configure LDAP Groups query
     prefix = config.registry.settings.get('pyramid_ldap.groups_query.prefix',
                                           'ldap.groups_query.')
     groups_query_settings = extract_settings_fn_args(
@@ -161,7 +165,7 @@ def includeme(config):
         pyramid_ldap.ldap_set_groups_query)
 
     if groups_query_settings:
-        #Ensure ``filter_tmpl`` is converted for string formatting of userdn
+        # Ensure ``filter_tmpl`` is converted for string formatting of userdn
         groups_query_coercion = {
             'filter_tmpl': lambda v: v.replace('${userdn}', '%(userdn)s'),
             'scope': as_ldap_scope,
