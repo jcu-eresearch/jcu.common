@@ -65,7 +65,7 @@ class LoginView(BaseView):
         """
         force_ssl = self.request.registry.settings[FORCE_SSL]
         if security.authenticated_userid(self.request) is None:
-            #Place current URL into the request environment for CAS plugin
+            # Place current URL into the request environment for CAS plugin
             return_url = self.request.referrer or ''
             if return_url and force_ssl:
                 return_url = return_url.replace('http://', 'https://')
@@ -73,7 +73,7 @@ class LoginView(BaseView):
             self.request.environ['QUERY_STRING'] = qs
             return Response(status=401)
         else:
-            #Load the user's previous URL out of the request
+            # Load the user's previous URL out of the request
             return_url = self.request.params.get('return')
             if not return_url:
                 return_route = self.request.registry.settings[RETURN_ROUTE]
@@ -82,38 +82,40 @@ class LoginView(BaseView):
                     _scheme='https' if force_ssl else 'http')
             return HTTPFound(location=return_url)
 
+
 @view_config(route_name='auth-logout')
 class LogoutView(BaseView):
     def __call__(self):
         """Log the user out by deleting cookies and redirecting to CAS logout.
         """
         if security.authenticated_userid(self.request):
-            #Return to this view once we've logged out.
+            # Return to this view once we've logged out.
             here = self.request.route_url(self.request.matched_route.name)
             here += '?return=' + self.request.referrer
             response = HTTPFound(location=here)
 
-            #Drop the current session for the user. Copy the session to the
-            #new response so the cookies get cleared.
+            # Drop the current session for the user. Copy the session to the
+            # new response so the cookies get cleared.
             response.session = self.request.session
             response.session.invalidate()
 
-            #Forget the user's login cookie
+            # Forget the user's login cookie
             forget_headers = security.forget(self.request)
             response.headerlist.extend(forget_headers)
             return response
         else:
-            #Once cookies are gone, sign out. Either SSO or redirection.
+            # Once cookies are gone, sign out. Either SSO or redirection.
             route = self.request.registry.settings[RETURN_ROUTE]
-            #Go back to the original page, or the default
+            # Go back to the original page, or the default
             return_url = self.request.params.get('return',
                                                  self.request.route_url(route))
 
             sso_url = self.request.registry.settings[SSO_URL]
             logout_url = (sso_url + '?url=' + return_url) if \
-                    self.request.registry.settings[ENABLE_SLO] else return_url
+                self.request.registry.settings[ENABLE_SLO] else return_url
 
             return HTTPFound(location=logout_url)
+
 
 class SchemeSelection(object):
     implements(IRoutePregenerator)
@@ -149,7 +151,7 @@ class User(object):
         display_name = self.user_id
         if self.attributes:
             display_name = self.attributes['givenname'] + ' ' + \
-                    self.attributes['surname']
+                self.attributes['surname']
         return display_name
 
     @property
@@ -168,6 +170,7 @@ def allow_acl(identifier):
     """
     return [(Allow, identifier, 'view'),
             (Allow, identifier, 'edit')]
+
 
 def get_user(user_class=User):
     def wrapped(request):
@@ -188,6 +191,7 @@ def verify_administators(identity, request):
     admins = request.registry.settings.get(ADMINISTRATORS_KEY, tuple())
     if identity['repoze.who.userid'] in admins:
         return ['group:Administrators']
+
 
 def callback_fn(callbacks):
     def callback(identity, request):
@@ -224,48 +228,48 @@ def includeme(config):
     authentication.
     """
     config.registry.settings[FORCE_SSL] = \
-            asbool(config.registry.settings.get(FORCE_SSL, False))
+        asbool(config.registry.settings.get(FORCE_SSL, False))
     config.add_view_predicate('authenticated', AuthenticatedPredicate)
 
-    #Adjust settings in config
+    # Adjust settings in config
     admins = config.registry.settings.get(ADMINISTRATORS_KEY)
     if admins:
         config.registry.settings[ADMINISTRATORS_KEY] = \
-                settings.aslist(admins)
+            settings.aslist(admins)
 
-    #Resolve callbacks from settings
+    # Resolve callbacks from settings
     callbacks_dotted = config.registry.settings.get(AUTH_CALLBACK, '').split()
     callbacks = [resolve_dotted(dotted) for dotted in callbacks_dotted]
 
-    #Load pyramid_who configuration
-    config_file=config.registry.settings.get(CONFIG_FILE)
+    # Load pyramid_who configuration
+    config_file = config.registry.settings.get(CONFIG_FILE)
     authentication_policy = WhoV2AuthenticationPolicy(
         config_file=config_file,
         identifier_id='auth_tkt',
         callback=callback_fn(callbacks)
     )
 
-    #Figure out the logout URL for CAS
+    # Figure out the logout URL for CAS
     for obj in authentication_policy._api_factory.challengers:
         plugin = obj[1]
         if hasattr(plugin, 'cas_url'):
             cas_url = plugin.cas_url
     config.registry.settings[SSO_URL] = '%slogout' % cas_url
     config.registry.settings[ENABLE_SLO] = \
-            asbool(config.registry.settings.get(ENABLE_SLO, False))
+        asbool(config.registry.settings.get(ENABLE_SLO, False))
 
     authorization_policy = ACLAuthorizationPolicy()
 
-    #Session already configured via pyramid_beaker include
+    # Session already configured via pyramid_beaker include
     config.set_authentication_policy(authentication_policy)
     config.set_authorization_policy(authorization_policy)
 
-    #Add a special lazy attributes/methods to the request
+    # Add a special lazy attributes/methods to the request
     user_class_dotted = config.registry.settings.get(USER_CLASS)
     user_class = resolve_dotted(user_class_dotted, User)
     config.add_request_method(get_user(user_class), 'user', reify=True)
 
-    #Auth routes
+    # Auth routes
     config.add_route('auth-login',
                      pattern='/login',
                      pregenerator=SchemeSelection())
