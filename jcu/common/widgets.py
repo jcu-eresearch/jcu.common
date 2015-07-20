@@ -57,7 +57,7 @@ def recaptcha_widget(node, kw):
             if not response:
                 raise colander.Invalid(
                     field.schema,
-                    'Please enter the characters you see below.')
+                    'Please enter the characters you see.')
             if not challenge:
                 raise colander.Invalid(
                     field.schema,
