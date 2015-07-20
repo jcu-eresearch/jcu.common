@@ -4,6 +4,8 @@ Changelog
 0.1-dev (unreleased)
 --------------------
 
+- Use SSL for reCAPTCHA widget.
+  [davidjb]
 - Add image_upload deform widget.
   [davidjb]
 - Add force SSL option to auth links.

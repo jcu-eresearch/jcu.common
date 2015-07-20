@@ -34,7 +34,7 @@ def recaptcha_widget(node, kw):
         template = 'recaptcha'
         readonly_template = 'recaptcha'
         requirements = ()
-        url = "http://www.google.com/recaptcha/api/verify"
+        url = "https://www.google.com/recaptcha/api/verify"
         headers={'Content-type': 'application/x-www-form-urlencoded'}
 
         def serialize(self, field, cstruct, readonly=False):
