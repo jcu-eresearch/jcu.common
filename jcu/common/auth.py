@@ -91,7 +91,10 @@ class LogoutView(BaseView):
         if security.authenticated_userid(self.request):
             # Return to this view once we've logged out.
             here = self.request.route_url(self.request.matched_route.name)
-            here += '?return=' + self.request.referrer
+            return_url = self.request.referrer or \
+                self.request.route_url(
+                    self.request.registry.settings[RETURN_ROUTE])
+            here += '?return=' + return_url
             response = HTTPFound(location=here)
 
             # Drop the current session for the user. Copy the session to the
